@@ -1,0 +1,38 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "mongodb"
+    url      = env("MONGODB_URI")
+}
+
+model clients {
+    id           String   @id @default(uuid()) @map("_id")
+    name         String
+    lastName     String
+    email        String
+    phone        String
+    home_address String
+    createdAt    DateTime @default(now())
+}
+
+model Lotion {
+    id          String      @id @default(uuid()) @map("_id")
+    name        String
+    brand       String
+    images      String[]
+    description String?
+    genre       genreLotion
+    isAvailable Boolean     @default(true)
+    chords      String[]    @default([])
+    price       Int
+}
+
+enum genreLotion {
+    man
+    woman
+    arab_men
+    arab_woman
+    unisex
+}
