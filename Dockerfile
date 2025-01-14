@@ -28,6 +28,7 @@ FROM node:20-alpine AS production
 WORKDIR /app
 
 # Copiar los archivos necesarios del builder
+COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
@@ -37,8 +38,9 @@ COPY --from=builder /app/prisma ./prisma
 # Exponer el puerto de la aplicación
 EXPOSE 8080
 
-# Variable de entorno para producción
+# Variables de entorno
 ENV NODE_ENV=production
+ENV PORT=8080
 
 # Comando de inicio flexible para producción o desarrollo
 CMD ["sh", "-c", "npx prisma generate && if [ \"$NODE_ENV\" = 'production' ]; then node dist/main.js; else npm run start:dev; fi"]
