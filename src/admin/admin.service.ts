@@ -62,6 +62,101 @@ export class AdminService {
     }
   }
 
+  public async getOnlyLotion(id: string) {
+    try {
+      const lotion = await this.prisma.lotion.findUnique({ where: { id } });
+      return { success: true, data: lotion }
+    } catch (error) {
+      if (error instanceof Error) {
+        return { success: false, error: error.message }
+      }
+    }
+  }
+
+  // Método para actualizar una loción existente
+  public async updateLotion(id: string, data: Partial<LotionDto>) {
+    try {
+      // Normaliza los datos para asegurar que los tipos son correctos
+      const { isAvailable, chords, ...restData } = data;
+
+      // Convierte `isAvailable` a boolean si viene como string
+      const normalizedIsAvailable = isAvailable !== undefined
+        ? JSON.parse(isAvailable.toString())
+        : undefined;
+
+      // Convierte los `chords` a una lista de strings si vienen como JSON string
+      const normalizedChords = chords ? JSON.parse(chords.toString()) : undefined;
+
+      // Actualiza la loción en la base de datos
+      const updatedLotion = await this.prisma.lotion.update({
+        where: { id },
+        data: {
+          ...restData,
+          ...(normalizedIsAvailable !== undefined && { isAvailable: normalizedIsAvailable }),
+          ...(normalizedChords && { chords: normalizedChords }),
+        },
+      });
+
+      return { success: true, data: updatedLotion };
+    } catch (error) {
+      console.error('Error updating lotion:', error.message);
+      throw error;
+    }
+  }
+
+  // Método para obtener los chords de una loción específica
+  public async getLotionChords(id: string) {
+    try {
+      const lotion = await this.prisma.lotion.findUnique({
+        where: { id },
+        select: { chords: true },
+      });
+      if (!lotion) throw new Error('Lotion not found');
+      return { success: true, data: lotion.chords };
+    } catch (error) {
+      console.error('Error fetching lotion chords:', error.message);
+      throw error;
+    }
+  }
+
+  // Método para editar los chords de una loción específica
+  public async updateLotionChords(id: string, newChords: string[]) {
+    try {
+      const trimmedChords = newChords.map((chord) => chord.trim().toLowerCase());
+      const updatedLotion = await this.prisma.lotion.update({
+        where: { id },
+        data: { chords: trimmedChords },
+      });
+      return { success: true, data: updatedLotion };
+    } catch (error) {
+      console.error('Error updating lotion chords:', error.message);
+      throw error;
+    }
+  }
+
+  // Método para agregar imágenes adicionales a una loción específica
+  public async addImagesToLotion(id: string, files: Express.Multer.File[]) {
+    try {
+      if (!files || files.length === 0) throw new Error('No files provided');
+
+      const uploadedImages = await this.cloudinary.uploadFile(files);
+      
+      const updatedLotion = await this.prisma.lotion.update({
+        where: { id },
+        data: {
+          images: {
+            push: uploadedImages,
+          },
+        },
+      });
+
+      return { success: true, data: updatedLotion };
+    } catch (error) {
+      console.error('Error adding images to lotion:', error.message);
+      throw error;
+    }
+  }
+
   public async allLotions(page: number = 1) {
     try {
       const pageSize = 20;
@@ -91,7 +186,6 @@ export class AdminService {
       }
     }
   }
-
 
   public async searchNameLotion(
     name: string,
@@ -226,5 +320,4 @@ export class AdminService {
       return { success: false, error: error.message };
     }
   }
-
 }
