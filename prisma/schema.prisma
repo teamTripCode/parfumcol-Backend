@@ -15,6 +15,8 @@ model clients {
     phone        String
     home_address String
     createdAt    DateTime @default(now())
+    orders       Order[]
+    cart         Cart?
 }
 
 model Lotion {
@@ -27,6 +29,58 @@ model Lotion {
     isAvailable Boolean     @default(true)
     chords      String[]    @default([])
     price       Int
+    cartItems   CartItem[]
+    orderItems  OrderItem[]
+}
+
+model CartItem {
+    id         String @id @default(uuid()) @map("_id")
+    cartId     String
+    cart       Cart   @relation(fields: [cartId], references: [id])
+    lotionId   String
+    lotion     Lotion @relation(fields: [lotionId], references: [id])
+    quantity   Int
+    price      Int
+    totalPrice Int
+}
+
+model Cart {
+    id          String     @id @default(uuid()) @map("_id")
+    clientId    String     @unique
+    client      clients    @relation(fields: [clientId], references: [id])
+    items       CartItem[]
+    totalAmount Int        @default(0)
+    createdAt   DateTime   @default(now())
+    updatedAt   DateTime   @updatedAt
+}
+
+model Order {
+    id          String      @id @default(uuid()) @map("_id")
+    clientId    String
+    client      clients     @relation(fields: [clientId], references: [id])
+    items       OrderItem[]
+    totalAmount Int
+    status      orderStatus @default(PENDING)
+    createdAt   DateTime    @default(now())
+    updatedAt   DateTime    @updatedAt
+}
+
+model OrderItem {
+    id         String @id @default(uuid()) @map("_id")
+    orderId    String
+    order      Order  @relation(fields: [orderId], references: [id])
+    lotionId   String
+    lotion     Lotion @relation(fields: [lotionId], references: [id])
+    quantity   Int
+    price      Int
+    totalPrice Int
+}
+
+enum orderStatus {
+    PENDING
+    SHIPPED
+    DELIVERED
+    CANCELED
 }
 
 enum genreLotion {
