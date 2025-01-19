@@ -7,11 +7,15 @@ datasource db {
     url      = env("MONGODB_URI")
 }
 
-model clients {
+model Accounts {
     id           String   @id @default(uuid()) @map("_id")
     name         String
     lastName     String
-    email        String
+    email        String   @unique
+    password     String
+    country      String
+    code_country String
+    city         String
     phone        String
     home_address String
     createdAt    DateTime @default(now())
@@ -46,8 +50,8 @@ model CartItem {
 
 model Cart {
     id          String     @id @default(uuid()) @map("_id")
-    clientId    String     @unique
-    client      clients    @relation(fields: [clientId], references: [id])
+    accountId   String     @unique
+    account     Accounts   @relation(fields: [accountId], references: [id])
     items       CartItem[]
     totalAmount Int        @default(0)
     createdAt   DateTime   @default(now())
@@ -56,8 +60,8 @@ model Cart {
 
 model Order {
     id          String      @id @default(uuid()) @map("_id")
-    clientId    String
-    client      clients     @relation(fields: [clientId], references: [id])
+    accountId   String
+    account     Accounts    @relation(fields: [accountId], references: [id])
     items       OrderItem[]
     totalAmount Int
     status      orderStatus @default(PENDING)

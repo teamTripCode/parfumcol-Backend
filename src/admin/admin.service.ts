@@ -140,7 +140,7 @@ export class AdminService {
       if (!files || files.length === 0) throw new Error('No files provided');
 
       const uploadedImages = await this.cloudinary.uploadFile(files);
-      
+
       const updatedLotion = await this.prisma.lotion.update({
         where: { id },
         data: {
@@ -189,39 +189,38 @@ export class AdminService {
 
   public async searchNameLotion(
     name: string,
-    page: number = 1, // Página actual (por defecto es 1)
-    priceOrder: 'asc' | 'desc' = 'asc', // Orden de precio: ascendente o descendente
-    brand?: string, // Filtro opcional por marca
-    chords?: string[], // Filtro opcional por chords
+    page: number = 1,
+    priceOrder: 'asc' | 'desc' = 'asc',
+    brand?: string,
+    chords?: string[],
   ) {
     try {
-      // Define el tamaño de la página
       const pageSize = 20;
-      const skip = (page - 1) * pageSize; // Desplazamiento según la página
+      const skip = (page - 1) * pageSize;
 
       // Construcción de filtros y orden
       const whereClause: any = {};
 
-      // Si se proporciona un nombre, lo utilizamos para buscar por el nombre
+      // Búsqueda por nombre usando contains para búsqueda parcial
       if (name) {
         whereClause.name = {
-          contains: name.trim(), // Se usa .trim() para evitar espacios innecesarios
+          contains: name.trim(),
           mode: 'insensitive',
         };
       }
 
-      // Si se proporciona una marca, la usamos como filtro insensible a mayúsculas/minúsculas
+      // Búsqueda exacta por marca usando equals en lugar de contains
       if (brand) {
         whereClause.brand = {
-          contains: brand.trim(), // Se aplica .trim() en el brand
-          mode: 'insensitive', // Hace la búsqueda insensible a mayúsculas/minúsculas
+          equals: brand.trim(),
+          mode: 'insensitive',
         };
       }
 
-      // Si se proporciona un array de chords, buscamos lociones que contengan al menos uno de esos chords
+      // Búsqueda por chords
       if (chords && chords.length > 0) {
         whereClause.chords = {
-          hasSome: chords.map(chord => chord.trim().toLowerCase()), // Normalizamos los chords y buscamos si alguno está presente
+          hasSome: chords.map(chord => chord.trim().toLowerCase()),
         };
       }
 
@@ -229,37 +228,50 @@ export class AdminService {
       const lotions = await this.prisma.lotion.findMany({
         where: whereClause,
         orderBy: {
-          price: priceOrder, // Ordena por precio
+          price: priceOrder,
         },
-        skip: skip, // Paginación (salto de resultados)
-        take: pageSize, // Limita los resultados a 20 por página
+        skip: skip,
+        take: pageSize,
       });
 
-      // Si no se encuentran resultados, devuelve un mensaje adecuado
       if (lotions.length === 0) {
-        return { success: false, message: 'No lotions found with the given parameters' };
+        return {
+          success: false,
+          message: 'No lotions found with the given parameters',
+          pagination: {
+            page,
+            totalPages: 0,
+            totalCount: 0,
+          },
+        };
       }
 
-      // Calcular el total de páginas en el backend y enviarlo
       const totalCount = await this.prisma.lotion.count({
-        where: whereClause, // Contamos el total de lociones según los filtros
+        where: whereClause,
       });
 
       const totalPages = Math.ceil(totalCount / pageSize);
 
-      // Devuelve los resultados encontrados con la paginación
       return {
         success: true,
         data: lotions,
         pagination: {
           page,
-          totalPages, // Enviamos totalPages ya calculado
-          totalCount, // Total de lociones encontradas
+          totalPages,
+          totalCount,
         },
       };
     } catch (error) {
       console.error('Error searching lotions:', error.message);
-      return { success: false, error: error.message };
+      return {
+        success: false,
+        error: error.message,
+        pagination: {
+          page,
+          totalPages: 0,
+          totalCount: 0,
+        },
+      };
     }
   }
 
