@@ -479,12 +479,15 @@ export class AdminService {
     }
   }
 
-  public getHousesLotions() {
+  public async getHousesLotions() {
     try {
-      return this.prisma.lotionHouse.findMany({});
+      const houses = await this.prisma.lotionHouse.findMany({});
+      return { success: true, data: houses };
     } catch (error) {
-      console.error('Error fetching houses and lotions:', error.message);
-      throw error;
+      if (error instanceof Error) {
+        console.error('Error fetching houses and lotions:', error.message);
+        return { success: false, error: error.message };
+      }
     }
   }
 }
