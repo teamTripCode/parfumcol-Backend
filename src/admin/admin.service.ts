@@ -444,18 +444,23 @@ export class AdminService {
   }
 
   // Método para actualizar una loción de la casa
-  public async updateLotionHouse(id: string, data: { name?: string; logo?: string }) {
+  public async updateLotionHouse(
+    id: string,
+    data: { name?: string; logo?: Express.Multer.File },
+  ) {
     try {
       // Prepara el objeto de datos con las propiedades que se proporcionan
       const updateData: any = {};
 
-      // Normaliza los datos si están presentes
+      // Normaliza el nombre si está presente
       if (data.name) {
-        updateData.name = data.name.trim(); // Se asegura de que el nombre no tenga espacios extra
+        updateData.name = data.name.trim();
       }
 
+      // Subir la imagen a Cloudinary si está presente
       if (data.logo) {
-        updateData.logo = data.logo.trim(); // Se asegura de que la URL del logo no tenga espacios extra
+        const [uploadedLogoUrl] = await this.cloudinary.uploadFile(data.logo);
+        updateData.logo = uploadedLogoUrl; // Guardar la URL subida
       }
 
       // Verifica que al menos uno de los campos (name o logo) esté presente para realizar la actualización
@@ -478,6 +483,7 @@ export class AdminService {
       return { success: false, error: error.message };
     }
   }
+
 
   public async getHousesLotions() {
     try {

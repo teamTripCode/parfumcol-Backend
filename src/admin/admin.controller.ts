@@ -1,8 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, UploadedFiles, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, UploadedFiles, Query, Put, UploadedFile } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { LotionDto } from './dto/create-admin.dto';
 import { UpdateAdminDto } from './dto/update-admin.dto';
-import { FilesInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 
 @Controller('admin')
 export class AdminController {
@@ -93,5 +93,18 @@ export class AdminController {
   @Get('all_lotion_houses')
   AllLotionsHouse() {
     return this.adminService.getHousesLotions();
+  }
+
+  @Put('update_lotion_house_logo/:id')
+  @UseInterceptors(FileInterceptor('logo'))
+  async updateLotionHouse(
+    @Param('id') id: string,
+    @Body() body: { name?: string },
+    @UploadedFile() logo?: Express.Multer.File,
+  ) {
+    return this.adminService.updateLotionHouse(id, {
+      name: body.name,
+      logo,
+    });
   }
 }
