@@ -74,4 +74,24 @@ export class AdminController {
   ) {
     return this.adminService.addImagesToLotion(id, files);
   }
+
+  @Get('all_brands')
+  AllBrands() {
+    return this.adminService.getAllBrands();
+  }
+
+  @Post('add_corrections_brands')
+  CorrectionBrands(@Body() data: { originalName: string; correctedName: string }[]) {
+    return this.adminService.addBrandCorrections(data);
+  }
+
+  @Post('add_brands')
+  AddBrands(@Body() data: { brands: string[] }) {
+    return this.adminService.saveLotionHouses(data.brands);
+  }
+
+  @Get('all_lotion_houses')
+  AllLotionsHouse() {
+    return this.adminService.getHousesLotions();
+  }
 }

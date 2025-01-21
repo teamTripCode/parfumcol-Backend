@@ -8,19 +8,34 @@ datasource db {
 }
 
 model Accounts {
-    id           String   @id @default(uuid()) @map("_id")
-    name         String
-    lastName     String
-    email        String   @unique
-    password     String
-    country      String
-    code_country String
-    city         String
-    phone        String
-    home_address String
-    createdAt    DateTime @default(now())
-    orders       Order[]
-    cart         Cart?
+    id             String           @id @default(uuid()) @map("_id")
+    name           String
+    lastName       String
+    email          String           @unique
+    password       String
+    country        String
+    code_country   String
+    city           String
+    phone          String
+    home_address   String
+    createdAt      DateTime         @default(now())
+    orders         Order[]
+    cart           Cart?
+    ContactAccount ContactAccount[]
+}
+
+model ContactAccount {
+    id        String   @id @default(uuid()) @map("_id")
+    accountId String
+    account   Accounts @relation(fields: [accountId], references: [id])
+}
+
+model BrandCorrection {
+    id            String   @id @default(uuid()) @map("_id")
+    originalName  String   @unique
+    correctedName String
+    createdAt     DateTime @default(now())
+    updatedAt     DateTime @updatedAt
 }
 
 model Lotion {
@@ -35,6 +50,14 @@ model Lotion {
     price       Int
     cartItems   CartItem[]
     orderItems  OrderItem[]
+}
+
+model LotionHouse {
+    id        String   @id @default(uuid()) @map("_id")
+    name      String   @unique
+    logo      String?
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 }
 
 model CartItem {

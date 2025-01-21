@@ -332,4 +332,159 @@ export class AdminService {
       return { success: false, error: error.message };
     }
   }
+
+  // Método para agregar nuevas correcciones de marcas
+  public async addBrandCorrections(corrections: { originalName: string; correctedName: string }[]) {
+    try {
+      // Normaliza las entradas para evitar duplicados
+      const normalizedCorrections = corrections.map((correction) => ({
+        originalName: correction.originalName.trim().toLowerCase(),
+        correctedName: correction.correctedName.trim().toLowerCase(),
+      }));
+
+      // Obtiene las correcciones existentes de la base de datos
+      const existingCorrections = await this.prisma.brandCorrection.findMany({
+        where: {
+          originalName: { in: normalizedCorrections.map((c) => c.originalName) },
+        },
+        select: { originalName: true },
+      });
+
+      const existingNames = new Set(existingCorrections.map((c) => c.originalName));
+
+      // Filtra las correcciones nuevas
+      const newCorrections = normalizedCorrections.filter(
+        (correction) => !existingNames.has(correction.originalName)
+      );
+
+      // Inserta solo las correcciones nuevas
+      const createdCorrections = await this.prisma.brandCorrection.createMany({
+        data: newCorrections,
+      });
+
+      return {
+        success: true,
+        message: `${createdCorrections.count} new brand corrections added successfully.`,
+      };
+    } catch (error) {
+      console.error('Error adding brand corrections:', error.message);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Método para obtener todas las marcas únicas con correcciones aplicadas
+  public async getAllBrands() {
+    try {
+      // Obtiene todas las lociones con sus marcas
+      const lotions = await this.prisma.lotion.findMany({
+        select: { brand: true },
+      });
+
+      // Obtiene las correcciones desde la base de datos
+      const corrections = await this.prisma.brandCorrection.findMany();
+      const correctionsMap = new Map(
+        corrections.map((correction) => [correction.originalName, correction.correctedName])
+      );
+
+      // Normaliza y corrige las marcas
+      const uniqueBrands = new Set<string>();
+
+      lotions.forEach((lotion) => {
+        const normalizedBrand = lotion.brand.trim().toLowerCase();
+        const correctedBrand = correctionsMap.get(normalizedBrand) || normalizedBrand;
+        uniqueBrands.add(correctedBrand);
+      });
+
+      return { success: true, data: Array.from(uniqueBrands).sort() };
+    } catch (error) {
+      console.error('Error fetching brands:', error.message);
+      return { success: false, error: error.message };
+    }
+  }
+
+  public async saveLotionHouses(brands: string[]) {
+    try {
+      // Normaliza las marcas para evitar duplicados
+      const normalizedBrands = brands.map((brand) => brand.trim().toLowerCase());
+
+      // Verifica las marcas que ya existen en la base de datos
+      const existingHouses = await this.prisma.lotionHouse.findMany({
+        where: {
+          name: { in: normalizedBrands },
+        },
+        select: { name: true },
+      });
+
+      const existingHouseNames = new Set(
+        existingHouses.map((house) => house.name)
+      );
+
+      // Filtra las marcas que no están en la base de datos
+      const newBrands = normalizedBrands.filter(
+        (brand) => !existingHouseNames.has(brand)
+      );
+
+      // Crea las nuevas casas de lociones en la base de datos una por una
+      const createdHouses = await Promise.all(
+        newBrands.map((brand) =>
+          this.prisma.lotionHouse.create({
+            data: { name: brand },
+          })
+        )
+      );
+
+      return {
+        success: true,
+        message: `${createdHouses.length} new lotion houses added successfully.`,
+      };
+    } catch (error) {
+      console.error('Error saving lotion houses:', error.message);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Método para actualizar una loción de la casa
+  public async updateLotionHouse(id: string, data: { name?: string; logo?: string }) {
+    try {
+      // Prepara el objeto de datos con las propiedades que se proporcionan
+      const updateData: any = {};
+
+      // Normaliza los datos si están presentes
+      if (data.name) {
+        updateData.name = data.name.trim(); // Se asegura de que el nombre no tenga espacios extra
+      }
+
+      if (data.logo) {
+        updateData.logo = data.logo.trim(); // Se asegura de que la URL del logo no tenga espacios extra
+      }
+
+      // Verifica que al menos uno de los campos (name o logo) esté presente para realizar la actualización
+      if (Object.keys(updateData).length === 0) {
+        throw new Error('No data to update');
+      }
+
+      // Actualiza la loción de la casa en la base de datos
+      const updatedLotionHouse = await this.prisma.lotionHouse.update({
+        where: { id },
+        data: updateData,
+      });
+
+      return {
+        success: true,
+        data: updatedLotionHouse,
+      };
+    } catch (error) {
+      console.error('Error updating lotion house:', error.message);
+      return { success: false, error: error.message };
+    }
+  }
+
+  public getHousesLotions() {
+    try {
+      return this.prisma.lotionHouse.findMany({});
+    } catch (error) {
+      console.error('Error fetching houses and lotions:', error.message);
+      throw error;
+    }
+  }
 }

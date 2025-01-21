@@ -69,7 +69,7 @@ export class AccountsService {
 
   public async profileAccount(id: string) {
     try {
-      const user = await this.prisma.accounts.findUnique({ where: { id } });
+      const user = await this.prisma.accounts.findUnique({ where: { id }, include: { cart: true } });
       const { password, ...secRes } = user;
       return { success: true, data: secRes }
     } catch (error) {
@@ -173,7 +173,7 @@ export class AccountsService {
 
   public async getItemsInCart(cartId: string) {
     try {
-      const items = await this.prisma.cartItem.findMany({ where: { cartId } })
+      const items = await this.prisma.cartItem.findMany({ where: { cartId }, include: { lotion: true } })
       if (items.length == 0) return { success: true, message: "Tu Carrito esta vacio" };
       return { success: true, data: items }
     } catch (error) {
