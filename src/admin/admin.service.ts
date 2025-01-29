@@ -11,8 +11,6 @@ export class AdminService {
     private readonly cloudinary: CloudinaryService
   ) { }
 
-  // Lotion management
-
   // Método para agregar una nueva loción
   public async addLotion(data: LotionDto, files: Express.Multer.File[]) {
     const {
@@ -484,14 +482,158 @@ export class AdminService {
     }
   }
 
-
-  public async getHousesLotions() {
+  public async getHousesLotions(page: number = 1) {
     try {
-      const houses = await this.prisma.lotionHouse.findMany({});
-      return { success: true, data: houses };
+      const pageSize = 20; // 20 items per page
+      const skip = (page - 1) * pageSize;
+
+      // Obtener las casas con la paginación
+      const houses = await this.prisma.lotionHouse.findMany({
+        skip,
+        take: pageSize,
+      });
+
+      // Obtener el total de registros
+      const totalHouses = await this.prisma.lotionHouse.count();
+
+      // Calcular el total de páginas
+      const totalPages = Math.ceil(totalHouses / pageSize);
+
+      return {
+        success: true,
+        data: houses,
+        pagination: {
+          totalHouses,
+          totalPages,
+          currentPage: page,
+        },
+      };
     } catch (error) {
       if (error instanceof Error) {
         console.error('Error fetching houses and lotions:', error.message);
+        return { success: false, error: error.message };
+      }
+    }
+  }
+
+  public async getLotionsByHousesCarrousel() {
+    try {
+      // Realizamos la consulta a la base de datos con Prisma, limitando a las primeras 20
+      const lotions = await this.prisma.lotionHouse.findMany({
+        take: 20, // Limita a las primeras 20 lociones
+        orderBy: {
+          id: 'asc', // Ordena por el campo id en orden ascendente
+        },
+      });
+
+      // Validación por si no se encuentran lociones
+      if (lotions.length === 0) {
+        return {
+          success: false,
+          message: 'No se encontraron lociones en la base de datos.',
+        };
+      }
+
+      return { success: true, data: lotions };
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error('Error fetching lotions for carousel:', error.message);
+
+        return {
+          success: false,
+          error: error.message,
+          message: 'Hubo un problema al obtener las lociones. Inténtalo nuevamente más tarde.'
+        };
+      }
+
+      // Por si el error no es una instancia de Error
+      return {
+        success: false,
+        message: 'Ocurrió un error desconocido.'
+      };
+    }
+  }
+
+  public async getLotionsByHouses(brand: string, page: number = 1) {
+    try {
+      const pageSize = 20;
+      const currentPage = Math.max(Number(page) || 1, 1);
+      const skip = (currentPage - 1) * pageSize;
+
+      // Limpiamos el nombre de la marca eliminando espacios innecesarios
+      const cleanedBrand = brand.trim().toLowerCase();
+
+      // Realizamos la consulta paginada a la base de datos con Prisma
+      const [lotions, totalLotions] = await Promise.all([
+        this.prisma.lotion.findMany({
+          where: {
+            brand: {
+              equals: cleanedBrand,
+              mode: 'insensitive',
+            },
+          },
+          skip,
+          take: pageSize, // Límite de lociones por página
+        }),
+        this.prisma.lotion.count({
+          where: {
+            brand: {
+              equals: cleanedBrand,
+              mode: 'insensitive',
+            },
+          },
+        }),
+      ]);
+
+      const totalPages = Math.ceil(totalLotions / pageSize);
+
+      return {
+        success: true,
+        data: lotions,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalLotions,
+        },
+      };
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error('Error fetching paginated lotions by brand:', error.message);
+        return { success: false, error: error.message };
+      }
+    }
+  }
+
+  public async getLotionHouse(brand: string) {
+    try {
+      // Limpiamos el nombre de la marca eliminando espacios innecesarios
+      const cleanedBrand = brand.trim().toLowerCase();
+
+      // Consultamos la información de la LotionHouse asociada con la marca
+      const lotionHouse = await this.prisma.lotionHouse.findFirst({
+        where: {
+          name: {
+            equals: cleanedBrand,
+            mode: 'insensitive',
+          },
+        },
+      });
+
+      // Verificamos si se encontró la LotionHouse
+      if (!lotionHouse) {
+        return {
+          success: false,
+          error: 'No se encontró la casa de loción para esta marca.',
+        };
+      }
+
+      return {
+        success: true,
+        data: lotionHouse,
+      };
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error('Error fetching lotion house:', error.message);
         return { success: false, error: error.message };
       }
     }

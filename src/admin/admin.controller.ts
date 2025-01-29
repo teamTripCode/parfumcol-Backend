@@ -1,7 +1,6 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, UploadedFiles, Query, Put, UploadedFile } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, UseInterceptors, UploadedFiles, Query, Put, UploadedFile } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { LotionDto } from './dto/create-admin.dto';
-import { UpdateAdminDto } from './dto/update-admin.dto';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 
 @Controller('admin')
@@ -107,4 +106,31 @@ export class AdminController {
       logo,
     });
   }
+
+  @Get('houses_carrousel')
+  async HousesCarrousel() {
+    return this.adminService.getLotionsByHousesCarrousel();
+  }
+
+  @Get('all_houses')
+  async allHouses(
+    @Query('page') page: string,
+  ) {
+    const currentPage = parseInt(page) || 1;
+    return this.adminService.getHousesLotions(currentPage)
+  }
+
+  @Get('house/:brand')
+  async InfoHouse(@Param('brand') brand: string) {
+    return this.adminService.getLotionHouse(brand);
+  }
+
+  @Get('house/:brand/lotions')
+  async LotionsHouses(
+    @Param('brand') brand: string,
+    @Query('page') page: number = 1
+  ) {
+    return this.adminService.getLotionsByHouses(brand, page);
+  }
+
 }
