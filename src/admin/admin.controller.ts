@@ -90,8 +90,8 @@ export class AdminController {
   }
 
   @Get('all_lotion_houses')
-  AllLotionsHouse() {
-    return this.adminService.getHousesLotions();
+  AllLotionsHouse(@Query('page') page: number) {
+    return this.adminService.getHousesLotions(page);
   }
 
   @Put('update_lotion_house_logo/:id')
