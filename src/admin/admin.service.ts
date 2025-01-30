@@ -2,13 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { LotionDto } from './dto/create-admin.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
+import { SearchService } from 'src/search/search.service';
 
 @Injectable()
 export class AdminService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly cloudinary: CloudinaryService
+    private readonly cloudinary: CloudinaryService,
+    private readonly search: SearchService
   ) { }
 
   // Método para agregar una nueva loción
@@ -192,85 +194,13 @@ export class AdminService {
     brand?: string,
     chords?: string[],
   ) {
-    try {
-      const pageSize = 20;
-      const skip = (page - 1) * pageSize;
-
-      // Construcción de filtros y orden
-      const whereClause: any = {};
-
-      // Búsqueda por nombre usando contains para búsqueda parcial
-      if (name) {
-        whereClause.name = {
-          contains: name.trim(),
-          mode: 'insensitive',
-        };
-      }
-
-      // Búsqueda exacta por marca usando equals en lugar de contains
-      if (brand) {
-        whereClause.brand = {
-          equals: brand.trim(),
-          mode: 'insensitive',
-        };
-      }
-
-      // Búsqueda por chords
-      if (chords && chords.length > 0) {
-        whereClause.chords = {
-          hasSome: chords.map(chord => chord.trim().toLowerCase()),
-        };
-      }
-
-      // Realiza la búsqueda con paginación, orden y filtros
-      const lotions = await this.prisma.lotion.findMany({
-        where: whereClause,
-        orderBy: {
-          price: priceOrder,
-        },
-        skip: skip,
-        take: pageSize,
-      });
-
-      if (lotions.length === 0) {
-        return {
-          success: false,
-          message: 'No lotions found with the given parameters',
-          pagination: {
-            page,
-            totalPages: 0,
-            totalCount: 0,
-          },
-        };
-      }
-
-      const totalCount = await this.prisma.lotion.count({
-        where: whereClause,
-      });
-
-      const totalPages = Math.ceil(totalCount / pageSize);
-
-      return {
-        success: true,
-        data: lotions,
-        pagination: {
-          page,
-          totalPages,
-          totalCount,
-        },
-      };
-    } catch (error) {
-      console.error('Error searching lotions:', error.message);
-      return {
-        success: false,
-        error: error.message,
-        pagination: {
-          page,
-          totalPages: 0,
-          totalCount: 0,
-        },
-      };
-    }
+    return await this.search.enhancedSearch({
+      name,
+      brand,
+      chords,
+      priceOrder,
+      page
+    })
   }
 
   public async getAllChords() {
@@ -370,7 +300,6 @@ export class AdminService {
     }
   }
 
-  // Método para obtener todas las marcas únicas con correcciones aplicadas
   public async getAllBrands() {
     try {
       // Obtiene todas las lociones con sus marcas
