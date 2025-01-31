@@ -4,6 +4,7 @@ import { AccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { OrderDto } from './dto/create-account.dto';  // Suponiendo que tienes un DTO para la creación de ordenes
 import { orderStatus } from './dto/create-account.dto';  // Si tienes el tipo de estado de la orden en este archivo
+import { CardData } from 'src/payment/dto/create-payment.dto';
 
 @Controller('accounts')
 export class AccountsController {
@@ -52,6 +53,18 @@ export class AccountsController {
   @Post(':accountId/cart')
   async addItemToCart(@Param('accountId') accountId: string, @Body() { lotionId, quantity }: { lotionId: string, quantity: number }) {
     return this.accountsService.addItemToCart(accountId, lotionId, quantity);
+  }
+
+  // Guardar una tarjeta
+  @Post(':accountId/cards')
+  async saveCard(@Param('accountId') accountId: string, @Body() cardData: CardData) {
+    return this.accountsService.saveInfoCard(accountId, cardData);
+  }
+
+  // Obtener tarjetas del usuario (solo últimos 4 dígitos)
+  @Get(':accountId/cards')
+  async getUserCards(@Param('accountId') accountId: string) {
+    return this.accountsService.getUserCards(accountId);
   }
 
   // Eliminar un item del carrito de la cuenta por su ID

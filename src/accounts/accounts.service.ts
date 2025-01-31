@@ -5,6 +5,8 @@ import { UpdateAccountDto } from './dto/update-account.dto';
 import { OrderDto, orderStatus } from './dto/create-account.dto';
 import * as bcrypt from "bcrypt"
 import { TokenService } from 'src/token/token.service';
+import { CardData } from 'src/payment/dto/create-payment.dto';
+import * as crypto from "crypto"
 
 @Injectable()
 export class AccountsService {
@@ -142,6 +144,133 @@ export class AccountsService {
     } catch (error) {
       if (error instanceof Error) {
         return { success: false, error: error.message };
+      }
+    }
+  }
+
+  // Guardar una tarjeta
+  public async saveInfoCard(accountId: string, info: CardData) {
+    try {
+      // Primero validar los datos de la tarjeta
+      const validation = this.validateCardData(info);
+      if (!validation.isValid) {
+        return { success: false, error: validation.error };
+      }
+
+      const account = await this.prisma.accounts.findUnique({
+        where: { id: accountId }
+      });
+
+      if (!account) return { success: false, error: "Cuenta no encontrada." };
+
+      // Formatear el número de tarjeta antes de encriptar
+      const formattedInfo = {
+        ...info,
+        card_number: info.card_number.replace(/\s+/g, '')
+      };
+
+      // Usar la contraseña desencriptada como clave para cifrar la tarjeta
+      const encryptionKey = crypto.createHash("sha256")
+        .update(account.password)
+        .digest("hex")
+        .substring(0, 32);
+
+      const iv = crypto.randomBytes(16);
+      const cipher = crypto.createCipheriv("aes-256-cbc", Buffer.from(encryptionKey), iv);
+
+      let encrypted = cipher.update(JSON.stringify(formattedInfo), "utf8", "hex");
+      encrypted += cipher.final("hex");
+
+      const encryptedData = iv.toString("hex") + ":" + encrypted;
+
+      // Guardar la información en la base de datos
+      const savedCard = await this.prisma.cardInfoAccount.create({
+        data: {
+          accountId,
+          encryptInfo: encryptedData
+        }
+      });
+
+      return { success: true, data: savedCard }
+    } catch (error) {
+
+    }
+  }
+
+  // Obtener tarjetas del usuario mostrando solo los últimos 4 dígitos
+  public async getUserCards(accountId: string) {
+    try {
+      const account = await this.prisma.accounts.findUnique({
+        where: { id: accountId },
+        include: { CardInfoAccount: true }
+      });
+
+      if (!account) return [];
+
+      // Usar la contraseña del usuario como clave de descifrado
+      const encryptionKey = crypto.createHash("sha256").update(account.password).digest("hex").substring(0, 32);
+
+      const decryptedCards = account.CardInfoAccount.map(card => {
+        try {
+          const [ivHex, encryptedData] = card.encryptInfo.split(":");
+          const iv = Buffer.from(ivHex, "hex");
+          const decipher = crypto.createDecipheriv("aes-256-cbc", Buffer.from(encryptionKey), iv);
+          let decrypted = decipher.update(encryptedData, "hex", "utf8");
+          decrypted += decipher.final("utf8");
+
+          const parsedCard: CardData = JSON.parse(decrypted);
+
+          return {
+            idCardInfoAccount: card.id,
+            lastFourDigits: parsedCard.card_number.slice(-4),
+            expirationDate: `${parsedCard.expiration_month}/${parsedCard.expiration_year}`,
+          };
+        } catch {
+          return { idCardInfoAccount: card.id, lastFourDigits: "Error al descifrar" };
+        }
+      });
+
+      return { success: true, data: decryptedCards };
+    } catch (error) {
+      if (error instanceof Error) {
+        return { success: false, error: error.message };
+      }
+    }
+  }
+
+  public async getCardById(accountId: string, idCardInfoAccount: string) {
+    try {
+      const account = await this.prisma.accounts.findUnique({
+        where: { id: accountId },
+        include: { CardInfoAccount: true }
+      });
+
+      if (!account) return null;
+
+      // Buscar la tarjeta específica
+      const cardInfo = account.CardInfoAccount.find(card => card.id === idCardInfoAccount);
+      if (!cardInfo) return null;
+
+      // Usar la contraseña del usuario como clave de descifrado
+      const encryptionKey = crypto.createHash("sha256").update(account.password).digest("hex").substring(0, 32);
+
+      try {
+        const [ivHex, encryptedData] = cardInfo.encryptInfo.split(":");
+        const iv = Buffer.from(ivHex, "hex");
+        const decipher = crypto.createDecipheriv("aes-256-cbc", Buffer.from(encryptionKey), iv);
+        let decrypted = decipher.update(encryptedData, "hex", "utf8");
+        decrypted += decipher.final("utf8");
+
+        const parsedCard: CardData = JSON.parse(decrypted);
+        return { success: true, data: parsedCard };
+      } catch (error) {
+        if (error instanceof Error) {
+          return { success: false, error: error.message }
+        }
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        return { success: false, error: error.message }
       }
     }
   }
@@ -353,5 +482,45 @@ export class AccountsService {
         return { success: false, error: error.message };
       }
     }
+  }
+
+  private validateCardData(cardData: CardData): { isValid: boolean; error?: string } {
+    // Eliminar espacios del número de tarjeta
+    const cleanCardNumber = cardData.card_number.replace(/\s+/g, '');
+
+    // Validar longitud de la tarjeta
+    if (cleanCardNumber.length !== 16) {
+      return { isValid: false, error: 'El número de tarjeta debe tener 16 dígitos.' };
+    }
+
+    // Validar que solo contenga números
+    if (!/^\d+$/.test(cleanCardNumber)) {
+      return { isValid: false, error: 'El número de tarjeta solo debe contener dígitos.' };
+    }
+
+    // Validar mes de expiración
+    const month = parseInt(cardData.expiration_month);
+    if (isNaN(month) || month < 1 || month > 12) {
+      return { isValid: false, error: 'Mes de expiración inválido.' };
+    }
+
+    // Validar año de expiración
+    const currentYear = new Date().getFullYear() % 100; // Obtener últimos 2 dígitos
+    const year = parseInt(cardData.expiration_year);
+    if (isNaN(year) || year < currentYear) {
+      return { isValid: false, error: 'Año de expiración inválido.' };
+    }
+
+    // Validar código de seguridad
+    if (!/^\d{3,4}$/.test(cardData.security_code)) {
+      return { isValid: false, error: 'Código de seguridad inválido.' };
+    }
+
+    // Validar nombre del titular
+    if (!cardData.cardHolder.name || cardData.cardHolder.name.trim().length < 3) {
+      return { isValid: false, error: 'Nombre del titular inválido.' };
+    }
+
+    return { isValid: true };
   }
 }

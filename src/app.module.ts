@@ -5,6 +5,7 @@ import { AdminModule } from './admin/admin.module';
 import { ConfigModule } from '@nestjs/config';
 import { AccountsModule } from './accounts/accounts.module';
 import { SearchModule } from './search/search.module';
+import { PaymentModule } from './payment/payment.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { SearchModule } from './search/search.module';
     ConfigModule.forRoot({ isGlobal: true }),
     AccountsModule,
     SearchModule,
+    PaymentModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -54,8 +54,21 @@ export class AccountDto {
     city: string
     phone: string
     home_address: string
+    identity_number?: string
+    type_identity?: TypeIdentity
     orders?: OrderDto[]
     cart: Cart
+    CardInfoAccount?: CardInfoAccount[]
+}
+
+export class CardInfoAccount {
+    id?: string
+    account?: AccountDto
+    accountId: string
+    encryptInfo: string
+    createdAt?: Date
+    updatedAt?: Date
 }
 
 export type orderStatus = "PENDING" | "SHIPPED" | "DELIVERED" | "CANCELED";
+export type TypeIdentity = 'cc' | 'ce';
