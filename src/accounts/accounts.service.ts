@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
-import { OrderDto, orderStatus } from './dto/create-account.dto';
+import { orderStatus } from './dto/create-account.dto';
 import * as bcrypt from "bcrypt"
 import { TokenService } from 'src/token/token.service';
 import { CardData } from 'src/payment/dto/create-payment.dto';
