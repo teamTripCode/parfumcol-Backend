@@ -71,4 +71,4 @@ export class CardInfoAccount {
 }
 
 export type orderStatus = "PENDING" | "SHIPPED" | "DELIVERED" | "CANCELED";
-export type TypeIdentity = 'cc' | 'ce';
+export type TypeIdentity = 'CC' | 'CE';

@@ -81,8 +81,18 @@ export class AccountsController {
 
   // Crear una orden
   @Post(':accountId/orders')
-  async createOrder(@Param('accountId') accountId: string, @Body() orderDto: OrderDto) {
-    return this.accountsService.createOrder(accountId, orderDto);
+  async createOrder(@Param('accountId') accountId: string) {
+    return this.accountsService.createOrder(accountId);
+  }
+
+  @Get(':accountId/orders')
+  async getOrders(@Param('accountId') accountId: string) {
+    return this.accountsService.getOrders(accountId);
+  }
+
+  @Get('orders/:orderId')
+  async getOrder(@Param('orderId') orderId: string) {
+    return this.accountsService.getOrderById(orderId);
   }
 
   // Actualizar una orden

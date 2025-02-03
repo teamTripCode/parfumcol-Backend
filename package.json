@@ -32,6 +32,7 @@
     "class-validator": "^0.14.1",
     "cloudinary": "^2.5.1",
     "fuse.js": "^7.0.0",
+    "joi": "^17.13.3",
     "jsonwebtoken": "^9.0.2",
     "mercadopago": "^2.3.0",
     "reflect-metadata": "^0.2.0",

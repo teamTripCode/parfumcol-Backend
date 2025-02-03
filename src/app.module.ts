@@ -6,6 +6,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AccountsModule } from './accounts/accounts.module';
 import { SearchModule } from './search/search.module';
 import { PaymentModule } from './payment/payment.module';
+import { WebhookPayModule } from './webhook_pay/webhook_pay.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { PaymentModule } from './payment/payment.module';
     AccountsModule,
     SearchModule,
     PaymentModule,
+    WebhookPayModule,
   ],
   controllers: [AppController],
   providers: [AppService],

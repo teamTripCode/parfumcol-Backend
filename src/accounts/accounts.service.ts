@@ -28,7 +28,9 @@ export class AccountsService {
       password: plainPassword,
       city,
       code_country,
-      country
+      country,
+      identity_number,
+      type_identity
     } = account;
 
     try {
@@ -45,6 +47,8 @@ export class AccountsService {
           city,
           code_country,
           country,
+          identity_number,
+          type_identity,
           cart: {
             create: {},
           },
@@ -415,7 +419,7 @@ export class AccountsService {
   }
 
   // Crear una orden
-  public async createOrder(accountId: string, createOrderDto: OrderDto) {
+  public async createOrder(accountId: string) {
     try {
       const cart = await this.prisma.cart.findUnique({
         where: { accountId },
@@ -447,6 +451,45 @@ export class AccountsService {
       await this.clearCart(accountId);
 
       return { success: true, data: newOrder };
+    } catch (error) {
+      if (error instanceof Error) {
+        return { success: false, error: error.message };
+      }
+    }
+  }
+
+  public async getOrders(accountId: string) {
+    try {
+      const orders = await this.prisma.order.findMany({
+        where: { accountId },
+        include: {
+          Payment: true,
+          items: {
+            include: {
+              lotion: true,
+            }
+          }
+        }
+      });
+      return { success: true, data: orders }
+    } catch (error) {
+      if (error instanceof Error) {
+        return { success: false, error: error.message }
+      }
+    }
+  }
+
+  public async getOrderById(orderId: string) {
+    try {
+      const response = await this.prisma.order.findUnique({
+        where: { id: orderId },
+        include: {
+          items: { include: { lotion: true } },
+          Payment: true,
+        }
+      })
+
+      return { success: true, data: response }
     } catch (error) {
       if (error instanceof Error) {
         return { success: false, error: error.message };

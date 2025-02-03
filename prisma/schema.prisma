@@ -93,6 +93,34 @@ model Cart {
     updatedAt   DateTime   @updatedAt
 }
 
+model Payment {
+    id            String        @id @default(uuid()) @map("_id")
+    orderId       String        @unique
+    order         Order         @relation(fields: [orderId], references: [id])
+    amount        Int
+    paymentMethod PaymentMethod
+    status        PaymentStatus @default(PENDING)
+    paymentId     String? // ID de la transacción de MercadoPago
+    cardLast4     String? // Últimos 4 dígitos de la tarjeta
+    cardBrand     String? // Marca de la tarjeta (visa, mastercard, etc)
+    createdAt     DateTime      @default(now())
+    updatedAt     DateTime      @updatedAt
+}
+
+enum PaymentMethod {
+    CARD // Pago con tarjeta vía MercadoPago
+    CASH_ON_DELIVERY // Pago contra entrega
+}
+
+enum PaymentStatus {
+    PENDING
+    PROCESSING
+    COMPLETED
+    FAILED
+    REFUNDED
+    CANCELED
+}
+
 model Order {
     id          String      @id @default(uuid()) @map("_id")
     accountId   String
@@ -102,6 +130,7 @@ model Order {
     status      orderStatus @default(PENDING)
     createdAt   DateTime    @default(now())
     updatedAt   DateTime    @updatedAt
+    Payment     Payment?
 }
 
 model OrderItem {
