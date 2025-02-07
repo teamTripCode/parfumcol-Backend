@@ -8,23 +8,29 @@ datasource db {
 }
 
 model Accounts {
-    id              String            @id @default(uuid()) @map("_id")
-    name            String
-    lastName        String
-    email           String            @unique
-    password        String
-    country         String
-    code_country    String
-    city            String
-    phone           String
-    identity_number String?
-    type_identity   TypeIdentity?
-    home_address    String
-    createdAt       DateTime          @default(now())
-    orders          Order[]
-    cart            Cart?
-    ContactAccount  ContactAccount[]
-    CardInfoAccount CardInfoAccount[]
+    id               String            @id @default(uuid()) @map("_id")
+    name             String
+    lastName         String
+    email            String            @unique
+    password         String
+    country          String?           @default("Colombia")
+    code_country     String?           @default("+57")
+    city             String?
+    phone            String?
+    identity_number  String?
+    type_identity    TypeIdentity?
+    home_address     String?
+    public_key_node  String
+    private_key_node String
+    accountHash      String
+    iv               String
+    salt             String
+    auth_tag         String
+    createdAt        DateTime          @default(now())
+    orders           Order[]
+    cart             Cart?
+    ContactAccount   ContactAccount[]
+    CardInfoAccount  CardInfoAccount[]
 }
 
 model ContactAccount {

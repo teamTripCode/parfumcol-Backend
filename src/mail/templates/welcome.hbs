@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        .email-container {
+            /* max-width: 600px; */
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background-color: #ffffff;
+            padding: 20px;
+            text-align: start;
+        }
+
+        .header img {
+            max-width: 60px;
+        }
+
+        .content {
+            padding: 20px;
+        }
+
+        .welcome-title {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+
+        .welcome-text {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .gift-section {
+            background-color: #f8f8f8;
+            border-radius: 8px;
+            padding-top: 30px;
+            padding-bottom: 30px;
+            margin-bottom: 20px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .gift-center-div {
+            display: grid;
+            place-content: center;
+            margin-bottom: 10px;
+        }
+
+        .titleReward {
+            font-size: 25px;
+        }
+
+        .textReward {
+            font-size: 20px;
+            padding: 0;
+            margin: 0;
+            margin-bottom: 1em;
+        }
+
+        .gift-section img {
+            width: 80px;
+            height: auto;
+        }
+
+        .section {
+            margin-bottom: 20px;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 1em;
+        }
+
+        .section-title {
+            color: #333;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .titleAdverticeKey {
+            color: blue;
+        }
+
+        .section-content {
+            color: #666;
+        }
+
+        .steps {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .steps li {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        .steps li:before {
+            content: '•';
+            color: #4a4a4a;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 10px;
+            background-color: #f4f4f4;
+            color: #888;
+            font-size: 12px;
+        }
+
+        .centerAmount {
+            padding: 10px;
+            background: white;
+            padding-left: 60px;
+            padding-right: 60px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            color: #666;
+        }
+
+        .amount-cripto {
+            font-size: 20px;
+        }
+
+        .amount-in-cop {
+            font-weight: 300;
+        }
+
+        .containerAmount {
+            display: grid;
+            place-content: center;
+        }
+
+        .container-private-key {
+            padding-top: 10px;
+            padding-bottom: 10px;
+            padding-left: 40px;
+            padding-right: 40px;
+            background: #f4f4f4;
+            border-radius: 8px;
+            max-width: 100%;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .section-info-chain {
+            display: flex;
+            flex-direction: row;
+            flex-grow: 1;
+            gap: 20px;
+        }
+
+        .suppraSection-info {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        .text-info-chain {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .icon-chain {
+            width: 80px;
+            height: auto;
+        }
+
+        .private-key-planned {
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="email-container">
+        <div class="header">
+            <img src="https://res.cloudinary.com/dqluumk10/image/upload/v1738946676/TripCode/Logos/dgmarbbqsum8cqym1cyg.png"
+                alt="ParfumCol Logo">
+        </div>
+
+        <div class="content">
+            <h1 class="welcome-title">Hola, {{ body.firstName }}</h1>
+            <p class="welcome-text">Nos alegra tenerte con nosotros. Prepárate para descubrir una experiencia única en fragancias de lujo.</p>
+
+            <div class="section">
+                <div class="section-title">Tu llave publica</div>
+                <div class="section-content">
+                    <p>
+                        Tu llave pública es como tu dirección de correo electrónico, pero en el mundo de las
+                        criptomonedas. Es un código único que te identifica y permite que otras personas te envíen
+                        criptomonedas o interactúen contigo en la blockchain.
+                    </p>
+
+                    <p><strong class="titleAdverticeKey">Guardala bien: </strong>No puedes cambiarla, así que es
+                        importante tenerla segura.</p>
+
+                    <p><strong class="titleAdverticeKey">Compártela con confianza: </strong>Puedes dársela a alguien si
+                        quieres recibir criptomonedas,
+                        pero nunca compartas tu llave privada, que es como la contraseña de tu cuenta.</p>
+
+                    <div class="container-private-key">
+                        <p class="private-key-planned">{{ body.publicKey }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="suppraSection-info">
+                <div class="section-info-chain">
+                    <div class="section-icon-chain">
+                        <img class="icon-chain"
+                            src="https://res.cloudinary.com/dqluumk10/image/upload/v1738948896/TripCode/Logos/fyue41uhdxmn39qefuvh.png"
+                            alt="iconChain" />
+                    </div>
+                    <div class="text-info-chain">
+                        <div class="section-title">Transparencia y Recompensas con Blockchain</div>
+                        <div class="section-content">
+                            Verifica cada paso de tu orden de compra gracias a nuestra tecnología blockchain,
+                            garantizando
+                            transparencia y trazabilidad.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-info-chain">
+                    <div class="section-icon-chain">
+                        <img class="icon-chain"
+                            src="https://res.cloudinary.com/dqluumk10/image/upload/v1738949632/TripCode/Logos/njzawcm5xvr9ghwevvmg.png"
+                            alt="iconChain" />
+                    </div>
+                    <div class="text-info-chain">
+                        <div class="section-title">Gana y Usa Criptomonedas Locales</div>
+                        <div class="section-content">
+                            Por cada compra, recibes un porcentaje en la criptomoneda local que puedes usar en nuestros
+                            comercios.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Próximos pasos</div>
+                <ul class="steps">
+                    <li>Completa tu perfil con la información de domicilio e identidad</li>
+                    <li>Descubre nuestra colección de fragancias de primera</li>
+                    <li>Realiza tu pedido y recíbelo en la puerta de tu casa</li>
+                    <li>Monitorea en tiempo real el recorrido de tu pedido con verificación blockchain</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer">
+            © 2025 ParfumCol. Todos los derechos reservados.
+        </div>
+    </div>
+</body>
+
+</html>

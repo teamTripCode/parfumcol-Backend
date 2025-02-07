@@ -7,15 +7,18 @@ import * as bcrypt from "bcrypt"
 import { TokenService } from 'src/token/token.service';
 import { CardData } from 'src/payment/dto/create-payment.dto';
 import * as crypto from "crypto"
+import { TripnodeService } from 'src/tripnode/tripnode.service';
+import { MailService } from 'src/mail/mail.service';
+import { contextWelcome } from 'src/mail/dto/templates';
 
 @Injectable()
 export class AccountsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly tokenService: TokenService,
+    private readonly blockchain: TripnodeService,
+    private readonly mail: MailService,
   ) { }
-
-  private readonly jwtSecret: string;
 
   // Crear una cuenta y un carrito asociado
   public async createAccount(account: AccountDto) {
@@ -24,17 +27,19 @@ export class AccountsService {
       lastName,
       email,
       phone,
-      home_address,
       password: plainPassword,
-      city,
-      code_country,
-      country,
-      identity_number,
-      type_identity
     } = account;
 
     try {
+      // Register account in node
+      const accountNode = await this.blockchain.createAccountInNode(name, email);
+
+      const private_key_node = accountNode.privateKey;
+      const public_key_node = accountNode.publicKey;
+
       const hashedPassword = await bcrypt.hash(plainPassword, 10);
+
+      const { encryptedKey, iv, salt, tag } = this.encryptPrivateKey(private_key_node, plainPassword);
 
       const resAccount = await this.prisma.accounts.create({
         data: {
@@ -43,12 +48,12 @@ export class AccountsService {
           email,
           password: hashedPassword,
           phone,
-          home_address,
-          city,
-          code_country,
-          country,
-          identity_number,
-          type_identity,
+          private_key_node: encryptedKey,
+          public_key_node,
+          iv,
+          salt,
+          auth_tag: tag,
+          accountHash: accountNode.accountHash,
           cart: {
             create: {},
           },
@@ -62,10 +67,20 @@ export class AccountsService {
 
       const token = this.tokenService.generateToken({
         accountId: resAccount.id,
-        cartId: resAccount.cart?.id || null,
+        cartId: resAccount.cart.id || null,
       });
 
-      return { success: true, access_token: token, data: { user: secRes } };
+      const to = secRes.email;
+      const body: contextWelcome = {
+        firstName: secRes.name,
+        publicKey: secRes.public_key_node,
+      }
+      
+      const sendMail = await this.mail.sendWelcomeEmail(to, body);
+
+      if (sendMail.success === false) throw new Error(sendMail.error);
+
+      return { success: true, accessToken: token, data: { user: secRes } };
     } catch (error) {
       if (error instanceof Error) {
         return { success: false, error: error.message };
@@ -565,5 +580,30 @@ export class AccountsService {
     }
 
     return { isValid: true };
+  }
+
+  // Función para derivar una clave a partir de la contraseña
+  private deriveKey(password: string, salt: string): Buffer {
+    return crypto.pbkdf2Sync(password, salt, 100000, 32, "sha256");
+  }
+
+  // Función para cifrar la clave privada
+  private encryptPrivateKey(privateKey: string, password: string): { encryptedKey: string, iv: string, salt: string, tag: string } {
+    const salt = crypto.randomBytes(16).toString("hex"); // Genera un salt aleatorio
+    const iv = crypto.randomBytes(12); // Vector de inicialización (IV)
+    const key = this.deriveKey(password, salt); // Deriva la clave de cifrado
+
+    const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
+    let encrypted = cipher.update(privateKey, "utf8", "hex");
+    encrypted += cipher.final("hex");
+
+    const tag = cipher.getAuthTag().toString("hex"); // Tag para autenticación
+
+    return {
+      encryptedKey: encrypted,
+      iv: iv.toString("hex"),
+      salt,
+      tag
+    };
   }
 }

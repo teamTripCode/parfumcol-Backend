@@ -11,6 +11,7 @@ import { Payer } from 'mercadopago/dist/clients/payment/commonTypes';
 import { Items } from 'mercadopago/dist/clients/commonTypes';
 import { AccountsService } from 'src/accounts/accounts.service';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { TripnodeService } from 'src/tripnode/tripnode.service';
 
 @Injectable()
 export class PaymentService {
@@ -22,6 +23,7 @@ export class PaymentService {
     private configService: ConfigService,
     private readonly account: AccountsService,
     private readonly prisma: PrismaService,
+    private readonly blockchain: TripnodeService,
   ) {
     this.client = new MercadoPagoConfig({
       accessToken: this.configService.get<string>('MP_ACCESS_TOKEN'),
@@ -157,6 +159,22 @@ export class PaymentService {
           where: { id: order.id },
           data: { status: 'SHIPPED' },
         });
+
+        const bussinessTokenId: string = process.env.BUSINESS_TOKEN_ID;
+        const bussinessPublicKey: string = process.env.BUSINESS_TOKEN_ID;
+        const fromClient: string = account.data.public_key_node;
+        const amount: number = order.amount;
+
+        // Creacion de bloque en nodo con recompensas
+        const blockRes = await this.blockchain.createBlockWithRewards(
+          fromClient,
+          bussinessPublicKey,
+          amount,
+          bussinessTokenId,
+        );
+
+        if (blockRes.success === false) throw new Error(blockRes.error);
+        
       }
 
       // Registrar solo información no sensible

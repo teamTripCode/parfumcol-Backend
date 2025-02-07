@@ -49,16 +49,36 @@ export class AccountDto {
     lastName: string
     email: string
     password: string
-    country: string
-    code_country: string
-    city: string
-    phone: string
-    home_address: string
+    country?: string
+    code_country?: string
+    city?: string
+    phone?: string
+    home_address?: string
     identity_number?: string
     type_identity?: TypeIdentity
+    public_key_node: string
+    private_key_node: string
+    accountHash: string
+    iv: string
+    salt: string
+    auth_tag: string
     orders?: OrderDto[]
     cart: Cart
     CardInfoAccount?: CardInfoAccount[]
+}
+
+export class BalancesAccount {
+    currency: string
+    amount: string
+}
+
+export class AccountInNode {
+    accountHash: string
+    name: string
+    email: string
+    publicKey: string
+    privateKey: string
+    balances: BalancesAccount[]
 }
 
 export class CardInfoAccount {

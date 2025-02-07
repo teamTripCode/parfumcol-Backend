@@ -7,6 +7,7 @@ import { AccountsModule } from './accounts/accounts.module';
 import { SearchModule } from './search/search.module';
 import { PaymentModule } from './payment/payment.module';
 import { WebhookPayModule } from './webhook_pay/webhook_pay.module';
+import { TripnodeModule } from './tripnode/tripnode.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { WebhookPayModule } from './webhook_pay/webhook_pay.module';
     SearchModule,
     PaymentModule,
     WebhookPayModule,
+    TripnodeModule,
   ],
   controllers: [AppController],
   providers: [AppService],
